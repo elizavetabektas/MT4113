@@ -1,43 +1,3 @@
-# Starting Values
-
-# Exercise 1
-
-mining_data <- read.csv("./MiningData.csv")
-
-mining_data$x <- mining_data$width / mining_data$depth
-mining_data$y <- mining_data$angle
-
-# y <- alpha*(1 - exp( - beta * x))
-
-# As x tends to infinity, y tends to alpha
-# take the maximum value of x, initialise alpha to be the angle
-alpha_0 <- mining_data$angle[which.max(mining_data$width / mining_data$depth)]
-initial_x <- mining_data$width[which.max(mining_data$width / mining_data$depth)] / 
-  mining_data$depth[which.max(mining_data$width / mining_data$depth)]
-initial_y <- alpha_0
-
-beta_0 <- 2 #randomly chosen, no real reason
-
-theta_0 <- c(alpha_0, beta_0)
-
-model <- function(x, alpha, beta){
-  y <- alpha * (1 - exp(-beta*x))
-}
-
-y <- mining_data$angle
-x <- sort(mining_data$width / mining_data$depth)
-
-y_curve <- sapply(x, model, alpha = alpha_0, beta = beta_0)
-
-plot(x, y)
-lines(x,y_curve)
-
-
-
-
-# Objective Function
-
-# Exercise 2
 
 RSS <- function(theta, data){
   alpha <- theta[1]
@@ -52,9 +12,6 @@ RSS <- function(theta, data){
 
 
 
-# The Newton Update
-
-# Exercise 3
 library(numDeriv)
 
 
@@ -82,32 +39,7 @@ Newton <- function(start, f, data, epsilon, maxit){
   
 }
 
-Newton_output <- Newton(theta_0, RSS, mining_data, 1e-5, 1000)
-Newton_alpha <- Newton_output[1]
-Newton_beta <- Newton_output[2]
-Newton_iterations <- Newton_output[3]
 
-
-
-# Using nlm()
-
-# Exercise 4
-
-nlm_result <- nlm(RSS, theta_0, data=mining_data)
-nlm_alpha <- nlm_result$estimate[1]
-nlm_beta <- nlm_result$estimate[2]
-
-
-# Using analytical derivatives
-
-# Exercise 5
-
-library(numDeriv)
-
-# Compute gradient vector for objective function f
-# INPUTS: theta: parameter vector data: dataframe with
-# x and y columns OUTPUTS: vector of gradients in each
-# direction
 df <- function(theta, data) {
   # compute residuals r for each data point
   pred <- theta[1] * (1 - exp(-theta[2] * data$x))
@@ -143,17 +75,6 @@ d2f <- function(theta, data) {
   return(H)
 }
 
-# (a)
-
-# Approximate derivatives:
-grad(RSS, theta_0, data = mining_data)
-hessian(RSS, theta_0, data = mining_data)
-
-# Exact derivatives:
-df(theta_0, data = mining_data)
-d2f(theta_0, data = mining_data)
-
-# (b)
 
 # Optimise a function f using Newton's method INPUTS:
 # start: vector of starting values f: function to be
@@ -214,25 +135,3 @@ Newton <- function(start, f, data, gfn = NULL, Hfn = NULL,
               g = gfn(theta, data), H = Hfn(theta, data), conv = conv,
               niter = iter))
 }
-
-# (c)
-
-# Run with no analytic derivatives
-system.time(opt1 <- Newton(theta_0, RSS, mining_data, maxit = 10))
-opt1$niter
-opt1$estimate
-opt1$value
-# Run with known gradient, but no Hessian
-system.time(opt2 <- Newton(theta_0, RSS, mining_data, gfn = df))
-opt2$niter
-opt2$estimate
-opt2$value
-# Run with known analytic derivatives
-system.time(opt3 <- Newton(theta_0, RSS, mining_data, gfn = df,
-                           Hfn = d2f))
-opt3$niter
-opt3$estimate
-opt3$value
-# Compare with nlm()
-nlm_alpha
-nlm_beta
